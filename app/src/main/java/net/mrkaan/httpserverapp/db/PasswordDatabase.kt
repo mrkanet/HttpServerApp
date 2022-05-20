@@ -1,4 +1,4 @@
-package net.mrkaan.httpserverapp.utils.db
+package net.mrkaan.httpserverapp.db
 
 import androidx.room.Database
 import androidx.room.RoomDatabase

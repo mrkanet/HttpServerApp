@@ -1,4 +1,4 @@
-package net.mrkaan.httpserverapp.utils.db
+package net.mrkaan.httpserverapp.db
 
 import androidx.room.*
 import net.mrkaan.httpserverapp.models.Password
@@ -8,7 +8,7 @@ interface PasswordDao {
     @Query("SELECT * FROM password")
     fun getAllSites(): List<Password>
 
-    @Query("SELECT * FROM password WHERE url in (:url)")
+    @Query("SELECT * FROM password WHERE url LIKE '%' || :url || '%'")
     fun getSelectedSite(url: String): List<Password>
 
     @Insert

@@ -1,8 +1,10 @@
 package net.mrkaan.httpserverapp.models
 
+import androidx.databinding.BaseObservable
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import net.mrkaan.httpserverapp.utils.SafeJsonObject
 import org.json.JSONArray
 import org.json.JSONObject
 import java.util.*
@@ -16,9 +18,9 @@ data class Password(
     @ColumnInfo(name = "last_update") var lastUpdate: Long,
     @ColumnInfo(name = "grouping") var grouping: String,
     @ColumnInfo(name = "old_passwords") var oldPasswords: String
-) {
+): BaseObservable() {
     companion object {
-        fun getPasswordFromJson(param: JSONObject): Password {
+        fun getPasswordFromJson(param: SafeJsonObject): Password {
             //todo check if is website saved before with same username if yes then update it and update old_passwords
             val newUid = UUID.randomUUID().toString()
             val url = param.getString("url")

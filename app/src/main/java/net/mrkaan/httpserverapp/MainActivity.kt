@@ -11,13 +11,15 @@ import com.sun.net.httpserver.HttpServer
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import net.mrkaan.httpserverapp.db.DatabaseUtil
 import net.mrkaan.httpserverapp.models.Password
+import net.mrkaan.httpserverapp.utils.SafeJsonObject
 import net.mrkaan.httpserverapp.utils.data.Constants
-import net.mrkaan.httpserverapp.utils.db.DatabaseUtil
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.IOException
 import java.io.InputStream
+import java.io.OutputStream
 import java.net.InetSocketAddress
 import java.util.*
 import java.util.concurrent.Executors
@@ -60,9 +62,21 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun sendResponse(httpExchange: HttpExchange, responseText: String) {
+        if (responseText.length > DEFAULT_BUFFER_SIZE) {
+            return
+        }
         httpExchange.sendResponseHeaders(200, responseText.length.toLong())
-        val os = httpExchange.responseBody
-        os.write(responseText.toByteArray())
+        val os: OutputStream = httpExchange.responseBody
+        try {
+            os.write(responseText.toByteArray())
+        } catch (e: IOException) {
+            val errorText =
+                addMoreSpaces(
+                    responseText.length,
+                    "There's a problem occurs: ${e.message.toString()}"
+                )
+            os.write(errorText.toByteArray())
+        }
         os.close()
     }
 
@@ -139,7 +153,7 @@ class MainActivity : AppCompatActivity() {
             for (i in 0 until jsonBody.length()) {
                 CoroutineScope(Dispatchers.IO).launch {
                     val password: Password =
-                        Password.getPasswordFromJson(JSONObject(jsonBody[i].toString()))
+                        Password.getPasswordFromJson(SafeJsonObject(jsonBody[i].toString()))
                     val passwords = DatabaseUtil.getPasswordDatabase().passwordDao()
                         .getSelectedSite(password.url)
                     if (passwords.isEmpty()) {
@@ -230,7 +244,7 @@ class MainActivity : AppCompatActivity() {
         if (httpExchange.requestMethod.equals("POST")) {
             val inputStream = httpExchange.requestBody
             val requestBody = streamToString(inputStream)
-            val jsonBody = JSONObject(requestBody)
+            val jsonBody = SafeJsonObject(requestBody)
             val password: Password = Password.getPasswordFromJson(jsonBody)
             CoroutineScope(Dispatchers.IO).launch {
                 val passwords = DatabaseUtil.getPasswordDatabase().passwordDao()
@@ -267,5 +281,12 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun addMoreSpaces(size: Int, text: String): String {
+        var t = text
+        for (i in 0..(size - text.length)) {
+            t += "."
+        }
+        return t
+    }
 
 }
